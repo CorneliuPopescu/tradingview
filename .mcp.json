@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "tradingview": {
+      "command": "node.exe",
+      "args": ["\\\\wsl.localhost\\Ubuntu-22.04\\home\\corneliu\\work\\tradingview\\tradingview-mcp\\src\\server.js"]
+    }
+  }
+}

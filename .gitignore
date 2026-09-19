@@ -1,0 +1,5 @@
+# vendored MCP server, cloned from https://github.com/tradesdontlie/tradingview-mcp
+tradingview-mcp/
+
+# session memory (remember plugin)
+.remember/

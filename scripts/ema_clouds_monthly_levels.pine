@@ -1,0 +1,168 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// EMA clouds © ripster47 (ported v4 -> v5). Monthly levels added.
+//@version=5
+indicator("Ripster EMA Clouds + Monthly Levels", "EMA+MLV", overlay=true, max_lines_count=50, max_boxes_count=50)
+
+// ── Ripster EMA Clouds ───────────────────────────────────────────
+matype   = input.string("EMA", "MA Type", options=["EMA", "SMA"])
+ma_len1  = input.int(8,   "Short EMA1 Length")
+ma_len2  = input.int(9,   "Long EMA1 Length")
+ma_len3  = input.int(5,   "Short EMA2 Length")
+ma_len4  = input.int(12,  "Long EMA2 Length")
+ma_len5  = input.int(34,  "Short EMA3 Length")
+ma_len6  = input.int(50,  "Long EMA3 Length")
+ma_len7  = input.int(72,  "Short EMA4 Length")
+ma_len8  = input.int(89,  "Long EMA4 Length")
+ma_len9  = input.int(180, "Short EMA5 Length")
+ma_len10 = input.int(200, "Long EMA5 Length")
+src      = input.source(hl2, "Source")
+showLine = input.bool(false, "Display EMA Line")
+ema1     = input.bool(true,  "Show EMA Cloud-1")
+ema2     = input.bool(true,  "Show EMA Cloud-2")
+ema3     = input.bool(true,  "Show EMA Cloud-3")
+ema4     = input.bool(false, "Show EMA Cloud-4")
+ema5     = input.bool(false, "Show EMA Cloud-5")
+emacloudleading = input.int(0, "Leading Period For EMA Cloud", minval=0)
+
+f_ma(len) => matype == "EMA" ? ta.ema(src, len) : ta.sma(src, len)
+
+mashort1 = f_ma(ma_len1)
+malong1  = f_ma(ma_len2)
+mashort2 = f_ma(ma_len3)
+malong2  = f_ma(ma_len4)
+mashort3 = f_ma(ma_len5)
+malong3  = f_ma(ma_len6)
+mashort4 = f_ma(ma_len7)
+malong4  = f_ma(ma_len8)
+mashort5 = f_ma(ma_len9)
+malong5  = f_ma(ma_len10)
+
+cloudcolour1 = mashort1 >= malong1 ? #036103 : #880e4f
+cloudcolour2 = mashort2 >= malong2 ? #4caf50 : #f44336
+cloudcolour3 = mashort3 >= malong3 ? #2196f3 : #ffb74d
+cloudcolour4 = mashort4 >= malong4 ? #009688 : #f06292
+cloudcolour5 = mashort5 >= malong5 ? #05bed5 : #e65100
+
+mashortcolor1 = mashort1 >= mashort1[1] ? color.olive : color.maroon
+mashortcolor2 = mashort2 >= mashort2[1] ? color.olive : color.maroon
+mashortcolor3 = mashort3 >= mashort3[1] ? color.olive : color.maroon
+mashortcolor4 = mashort4 >= mashort4[1] ? color.olive : color.maroon
+mashortcolor5 = mashort5 >= mashort5[1] ? color.rgb(179, 179, 43) : color.maroon
+
+mashortline1 = plot(ema1 ? mashort1 : na, color=showLine ? mashortcolor1 : na, linewidth=1, offset=emacloudleading, display=display.all - display.price_scale, title="Short Leading EMA1")
+mashortline2 = plot(ema2 ? mashort2 : na, color=showLine ? mashortcolor2 : na, linewidth=1, offset=emacloudleading, display=display.all - display.price_scale, title="Short Leading EMA2")
+mashortline3 = plot(ema3 ? mashort3 : na, color=showLine ? mashortcolor3 : na, linewidth=1, offset=emacloudleading, display=display.all - display.price_scale, title="Short Leading EMA3")
+mashortline4 = plot(ema4 ? mashort4 : na, color=showLine ? mashortcolor4 : na, linewidth=1, offset=emacloudleading, display=display.all - display.price_scale, title="Short Leading EMA4")
+mashortline5 = plot(ema5 ? mashort5 : na, color=showLine ? mashortcolor5 : na, linewidth=1, offset=emacloudleading, display=display.all - display.price_scale, title="Short Leading EMA5")
+
+malongcolor1 = malong1 >= malong1[1] ? color.green : color.red
+malongcolor2 = malong2 >= malong2[1] ? color.green : color.red
+malongcolor3 = malong3 >= malong3[1] ? color.green : color.red
+malongcolor4 = malong4 >= malong4[1] ? color.green : color.red
+malongcolor5 = malong5 >= malong5[1] ? color.green : color.red
+
+malongline1 = plot(ema1 ? malong1 : na, color=showLine ? malongcolor1 : na, linewidth=3, offset=emacloudleading, display=display.all - display.price_scale, title="Long Leading EMA1")
+malongline2 = plot(ema2 ? malong2 : na, color=showLine ? malongcolor2 : na, linewidth=3, offset=emacloudleading, display=display.all - display.price_scale, title="Long Leading EMA2")
+malongline3 = plot(ema3 ? malong3 : na, color=showLine ? malongcolor3 : na, linewidth=3, offset=emacloudleading, display=display.all - display.price_scale, title="Long Leading EMA3")
+malongline4 = plot(ema4 ? malong4 : na, color=showLine ? malongcolor4 : na, linewidth=3, offset=emacloudleading, display=display.all - display.price_scale, title="Long Leading EMA4")
+malongline5 = plot(ema5 ? malong5 : na, color=showLine ? malongcolor5 : na, linewidth=3, offset=emacloudleading, display=display.all - display.price_scale, title="Long Leading EMA5")
+
+fill(mashortline1, malongline1, color=color.new(cloudcolour1, 45), title="MA Cloud1")
+fill(mashortline2, malongline2, color=color.new(cloudcolour2, 65), title="MA Cloud2")
+fill(mashortline3, malongline3, color=color.new(cloudcolour3, 70), title="MA Cloud3")
+fill(mashortline4, malongline4, color=color.new(cloudcolour4, 65), title="MA Cloud4")
+fill(mashortline5, malongline5, color=color.new(cloudcolour5, 65), title="MA Cloud5")
+
+// ── Monthly levels ───────────────────────────────────────────────
+// Current month high/low, then walk back: next higher highs / lower lows (up to N each).
+// All-time high/low get their own color. Works on any timeframe (reads monthly data).
+grpM     = "Monthly levels"
+showLv   = input.bool(true, "Show monthly levels", group=grpM)
+maxSteps = input.int(2, "Extra higher highs / lower lows", minval=0, maxval=5, group=grpM)
+cNorm    = input.color(color.red,   "Level color", group=grpM)
+cAth     = input.color(color.green, "All-time high/low color", group=grpM)
+cLbl     = input.color(#2962ff, "Label color", group=grpM)
+lblOff   = input.int(4, "Label offset (bars to the right)", minval=0, maxval=500, group=grpM)
+
+f_hist() =>
+    var hi = array.new_float()
+    var lo = array.new_float()
+    var tm = array.new_int()
+    array.push(hi, high)
+    array.push(lo, low)
+    array.push(tm, time)
+    [hi, lo, tm]
+
+[mHi, mLo, mTm] = request.security(syminfo.tickerid, "M", f_hist(), lookahead=barmerge.lookahead_on)
+
+var line[]  lvLines  = array.new_line()
+var box[]   lvBoxes  = array.new_box()
+// ponytail: plot slots give the axis price tags; 12 = 2 + 2*maxSteps(max 5).
+var lvP = array.new_float(12, na)
+var lvC = array.new_color(12, na)
+var monNames = array.from("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+f_tag(int t) => array.get(monNames, month(t) - 1) + "-" + str.tostring(year(t) % 100, "00")
+
+// ponytail: labels sit N bars right of the last bar; Pine cannot pin to the viewport edge like a manual ray.
+// Text lives in an invisible box whose edge sits on the line: highs align to the bottom edge, lows to the top edge.
+f_draw(int t, float p, color c, bool isHigh) =>
+    // x2 is one bar past the last bar: a zero-length line (current month on the monthly chart) would not extend.
+    array.push(lvLines, line.new(t, p, time + timeframe.in_seconds() * 1000, p, xloc=xloc.bar_time, extend=extend.right, color=c, width=1))
+    k = array.size(lvLines) - 1
+    if k < 12
+        array.set(lvP, k, p)
+        array.set(lvC, k, c)
+    x1 = bar_index + lblOff
+    array.push(lvBoxes, box.new(x1, isHigh ? p * 1.2 : p, x1 + 30, isHigh ? p : p * 0.8, border_color=color.new(color.black, 100), bgcolor=color.new(color.black, 100), text=f_tag(t), text_color=cLbl, text_size=size.small, text_halign=text.align_left, text_valign=isHigh ? text.align_bottom : text.align_top))
+
+if showLv and barstate.islast
+    for l in lvLines
+        line.delete(l)
+    for b in lvBoxes
+        box.delete(b)
+    array.clear(lvLines)
+    array.clear(lvBoxes)
+    array.fill(lvP, na)
+    n = array.size(mHi)
+    if n > 0
+        ath  = array.max(mHi)
+        atl  = array.min(mLo)
+        curH = array.get(mHi, n - 1)
+        curL = array.get(mLo, n - 1)
+        curT = array.get(mTm, n - 1)
+        f_draw(curT, curH, curH >= ath ? cAth : cNorm, true)
+        f_draw(curT, curL, curL <= atl ? cAth : cNorm, false)
+        refH = curH
+        refL = curL
+        cntH = 0
+        cntL = 0
+        if n >= 2
+            for i = n - 2 to 0
+                if cntH >= maxSteps and cntL >= maxSteps
+                    break
+                h = array.get(mHi, i)
+                l = array.get(mLo, i)
+                t = array.get(mTm, i)
+                if cntH < maxSteps and h > refH
+                    f_draw(t, h, h >= ath ? cAth : cNorm, true)
+                    refH := h
+                    cntH += 1
+                if cntL < maxSteps and l < refL
+                    f_draw(t, l, l <= atl ? cAth : cNorm, false)
+                    refL := l
+                    cntL += 1
+
+// Axis price tags for the levels (line only, no pane plot).
+plot(array.get(lvP, 0), "Level 1", color=array.get(lvC, 0), display=display.price_scale)
+plot(array.get(lvP, 1), "Level 2", color=array.get(lvC, 1), display=display.price_scale)
+plot(array.get(lvP, 2), "Level 3", color=array.get(lvC, 2), display=display.price_scale)
+plot(array.get(lvP, 3), "Level 4", color=array.get(lvC, 3), display=display.price_scale)
+plot(array.get(lvP, 4), "Level 5", color=array.get(lvC, 4), display=display.price_scale)
+plot(array.get(lvP, 5), "Level 6", color=array.get(lvC, 5), display=display.price_scale)
+plot(array.get(lvP, 6), "Level 7", color=array.get(lvC, 6), display=display.price_scale)
+plot(array.get(lvP, 7), "Level 8", color=array.get(lvC, 7), display=display.price_scale)
+plot(array.get(lvP, 8), "Level 9", color=array.get(lvC, 8), display=display.price_scale)
+plot(array.get(lvP, 9), "Level 10", color=array.get(lvC, 9), display=display.price_scale)
+plot(array.get(lvP, 10), "Level 11", color=array.get(lvC, 10), display=display.price_scale)
+plot(array.get(lvP, 11), "Level 12", color=array.get(lvC, 11), display=display.price_scale)
