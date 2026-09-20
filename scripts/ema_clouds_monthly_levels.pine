@@ -80,14 +80,15 @@ showVd = input.bool(true, "Daily VWAP (intraday charts only)", group=grpV)
 showVm = input.bool(true, "Monthly VWAP", group=grpV)
 showVq = input.bool(true, "Quarterly VWAP", group=grpV)
 cVd    = input.color(#2962ff, "Daily color", group=grpV)
-cVm    = input.color(#ffeb3b, "Monthly color", group=grpV)
+cVm    = input.color(color.new(#ffeb3b, 50), "Monthly color", group=grpV)
 cVq    = input.color(#ff00ff, "Quarterly color", group=grpV)
 vwapD  = ta.vwap(hlc3, timeframe.change("D"))
 vwapM  = ta.vwap(hlc3, timeframe.change("M"))
 vwapQ  = ta.vwap(hlc3, timeframe.change("3M"))
 plot(showVd and timeframe.isintraday ? vwapD : na, "Daily VWAP", color=cVd, linewidth=1, display=display.all - display.price_scale)
-plot(showVm ? vwapM : na, "Monthly VWAP",   color=cVm, linewidth=1, display=display.all - display.price_scale)
 plot(showVq ? vwapQ : na, "Quarterly VWAP", color=cVq, linewidth=1, display=display.all - display.price_scale)
+// Monthly drawn last (on top) and half transparent: in the first month of a quarter it equals the quarterly line.
+plot(showVm ? vwapM : na, "Monthly VWAP",   color=cVm, linewidth=1, display=display.all - display.price_scale)
 
 // ── Monthly levels ───────────────────────────────────────────────
 // Current month high/low, then walk back: next higher highs / lower lows (up to N each).
