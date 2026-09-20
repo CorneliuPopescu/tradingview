@@ -1,6 +1,6 @@
 // This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
-// EMA clouds © ripster47 (ported v4 -> v5). Monthly levels added.
-//@version=5
+// EMA clouds © ripster47 (ported v4 -> v6). Monthly levels added.
+//@version=6
 indicator("Ripster EMA Clouds + Monthly Levels", "EMA+MLV", overlay=true, max_lines_count=50, max_boxes_count=50)
 
 // ── Ripster EMA Clouds ───────────────────────────────────────────
@@ -73,6 +73,22 @@ fill(mashortline3, malongline3, color=color.new(cloudcolour3, 70), title="MA Clo
 fill(mashortline4, malongline4, color=color.new(cloudcolour4, 65), title="MA Cloud4")
 fill(mashortline5, malongline5, color=color.new(cloudcolour5, 65), title="MA Cloud5")
 
+// ── Anchored VWAPs ───────────────────────────────────────────────
+// ta.vwap restarts at each anchor; timeframe.change fires on the first bar of the new day / month / quarter.
+grpV   = "Anchored VWAP"
+showVd = input.bool(true, "Daily VWAP (intraday charts only)", group=grpV)
+showVm = input.bool(true, "Monthly VWAP", group=grpV)
+showVq = input.bool(true, "Quarterly VWAP", group=grpV)
+cVd    = input.color(#2962ff, "Daily color", group=grpV)
+cVm    = input.color(#ffeb3b, "Monthly color", group=grpV)
+cVq    = input.color(#ff00ff, "Quarterly color", group=grpV)
+vwapD  = ta.vwap(hlc3, timeframe.change("D"))
+vwapM  = ta.vwap(hlc3, timeframe.change("M"))
+vwapQ  = ta.vwap(hlc3, timeframe.change("3M"))
+plot(showVd and timeframe.isintraday ? vwapD : na, "Daily VWAP", color=cVd, linewidth=1, display=display.all - display.price_scale)
+plot(showVm ? vwapM : na, "Monthly VWAP",   color=cVm, linewidth=1, display=display.all - display.price_scale)
+plot(showVq ? vwapQ : na, "Quarterly VWAP", color=cVq, linewidth=1, display=display.all - display.price_scale)
+
 // ── Monthly levels ───────────────────────────────────────────────
 // Current month high/low, then walk back: next higher highs / lower lows (up to N each).
 // All-time high/low get their own color. Works on any timeframe (reads monthly data).
@@ -88,12 +104,15 @@ f_hist() =>
     var hi = array.new_float()
     var lo = array.new_float()
     var tm = array.new_int()
+    var tc = array.new_int()
     array.push(hi, high)
     array.push(lo, low)
     array.push(tm, time)
-    [hi, lo, tm]
+    // Label month comes from time_close: a CME monthly bar opens 17:00 CT on the last day of the prior month, so month(time) is one month early.
+    array.push(tc, time_close)
+    [hi, lo, tm, tc]
 
-[mHi, mLo, mTm] = request.security(syminfo.tickerid, "M", f_hist(), lookahead=barmerge.lookahead_on)
+[mHi, mLo, mTm, mTc] = request.security(syminfo.tickerid, "M", f_hist(), lookahead=barmerge.lookahead_on)
 
 var line[]  lvLines  = array.new_line()
 var box[]   lvBoxes  = array.new_box()
@@ -106,7 +125,7 @@ f_tag(int t) => array.get(monNames, month(t) - 1) + "-" + str.tostring(year(t) %
 
 // ponytail: labels sit N bars right of the last bar; Pine cannot pin to the viewport edge like a manual ray.
 // Text lives in an invisible box whose edge sits on the line: highs align to the bottom edge, lows to the top edge.
-f_draw(int t, float p, color c, bool isHigh) =>
+f_draw(int t, int tc, float p, color c, bool isHigh) =>
     // x2 is one bar past the last bar: a zero-length line (current month on the monthly chart) would not extend.
     array.push(lvLines, line.new(t, p, time + timeframe.in_seconds() * 1000, p, xloc=xloc.bar_time, extend=extend.right, color=c, width=1))
     k = array.size(lvLines) - 1
@@ -114,7 +133,7 @@ f_draw(int t, float p, color c, bool isHigh) =>
         array.set(lvP, k, p)
         array.set(lvC, k, c)
     x1 = bar_index + lblOff
-    array.push(lvBoxes, box.new(x1, isHigh ? p * 1.2 : p, x1 + 30, isHigh ? p : p * 0.8, border_color=color.new(color.black, 100), bgcolor=color.new(color.black, 100), text=f_tag(t), text_color=cLbl, text_size=size.small, text_halign=text.align_left, text_valign=isHigh ? text.align_bottom : text.align_top))
+    array.push(lvBoxes, box.new(x1, isHigh ? p * 1.2 : p, x1 + 30, isHigh ? p : p * 0.8, border_color=color.new(color.black, 100), bgcolor=color.new(color.black, 100), text=f_tag(tc), text_color=cLbl, text_size=size.small, text_halign=text.align_left, text_valign=isHigh ? text.align_bottom : text.align_top))
 
 if showLv and barstate.islast
     for l in lvLines
@@ -131,8 +150,9 @@ if showLv and barstate.islast
         curH = array.get(mHi, n - 1)
         curL = array.get(mLo, n - 1)
         curT = array.get(mTm, n - 1)
-        f_draw(curT, curH, curH >= ath ? cAth : cNorm, true)
-        f_draw(curT, curL, curL <= atl ? cAth : cNorm, false)
+        curC = array.get(mTc, n - 1)
+        f_draw(curT, curC, curH, curH >= ath ? cAth : cNorm, true)
+        f_draw(curT, curC, curL, curL <= atl ? cAth : cNorm, false)
         refH = curH
         refL = curL
         cntH = 0
@@ -144,12 +164,13 @@ if showLv and barstate.islast
                 h = array.get(mHi, i)
                 l = array.get(mLo, i)
                 t = array.get(mTm, i)
+                tc = array.get(mTc, i)
                 if cntH < maxSteps and h > refH
-                    f_draw(t, h, h >= ath ? cAth : cNorm, true)
+                    f_draw(t, tc, h, h >= ath ? cAth : cNorm, true)
                     refH := h
                     cntH += 1
                 if cntL < maxSteps and l < refL
-                    f_draw(t, l, l <= atl ? cAth : cNorm, false)
+                    f_draw(t, tc, l, l <= atl ? cAth : cNorm, false)
                     refL := l
                     cntL += 1
 
