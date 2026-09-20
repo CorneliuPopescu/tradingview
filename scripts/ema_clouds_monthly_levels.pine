@@ -90,6 +90,39 @@ plot(showVq ? vwapQ : na, "Quarterly VWAP", color=cVq, linewidth=1, display=disp
 // Monthly drawn last (on top) and half transparent: in the first month of a quarter it equals the quarterly line.
 plot(showVm ? vwapM : na, "Monthly VWAP",   color=cVm, linewidth=1, display=display.all - display.price_scale)
 
+// ── VWAP tendency ────────────────────────────────────────────────
+// Σ volume*(hlc3-vwap) / Σ volume, as % of vwap, reset with the VWAP anchor. + = price ran above its VWAP (bullish).
+grpT  = "VWAP tendency"
+showT = input.bool(true, "Show tendency table", group=grpT)
+tPos  = input.string("Top right", "Table corner", options=["Top right", "Top left", "Bottom right", "Bottom left"], group=grpT)
+
+f_tend(float v, bool anchor) =>
+    var float num = 0.0
+    var float den = 0.0
+    if anchor
+        num := 0.0
+        den := 0.0
+    num += volume * (hlc3 - v)
+    den += volume
+    den > 0 ? num / den / v * 100 : na
+
+tD = f_tend(vwapD, timeframe.change("D"))
+tM = f_tend(vwapM, timeframe.change("M"))
+tQ = f_tend(vwapQ, timeframe.change("3M"))
+
+var table tbl = table.new(tPos == "Top left" ? position.top_left : tPos == "Bottom right" ? position.bottom_right : tPos == "Bottom left" ? position.bottom_left : position.top_right, 2, 3)
+f_row(int r, string name, float v) =>
+    table.cell(tbl, 0, r, name, text_color=color.gray, text_size=size.small, text_halign=text.align_left)
+    table.cell(tbl, 1, r, (v >= 0 ? "+" : "") + str.tostring(v, "0.00") + "%", text_color=v >= 0 ? color.green : color.red, text_size=size.small, text_halign=text.align_right)
+
+if showT and barstate.islast
+    r = 0
+    if timeframe.isintraday
+        f_row(r, "D", tD)
+        r += 1
+    f_row(r, "M", tM)
+    f_row(r + 1, "3M", tQ)
+
 // ── Monthly levels ───────────────────────────────────────────────
 // Current month high/low, then walk back: next higher highs / lower lows (up to N each).
 // All-time high/low get their own color. Works on any timeframe (reads monthly data).
