@@ -116,12 +116,10 @@ f_row(int r, string name, float v) =>
     table.cell(tbl, 1, r, (v >= 0 ? "+" : "") + str.tostring(v, "0.00") + "%", text_color=v >= 0 ? color.green : color.red, text_size=size.small, text_halign=text.align_right)
 
 if showT and barstate.islast
-    r = 0
+    f_row(0, "3M", tQ)
+    f_row(1, "M", tM)
     if timeframe.isintraday
-        f_row(r, "D", tD)
-        r += 1
-    f_row(r, "M", tM)
-    f_row(r + 1, "3M", tQ)
+        f_row(2, "D", tD)
 
 // ── Monthly levels ───────────────────────────────────────────────
 // Current month high/low, then walk back: next higher highs / lower lows (up to N each).
