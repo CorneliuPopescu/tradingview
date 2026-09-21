@@ -10,3 +10,7 @@ TradingView Scripting
 ```bash
 cmd.exe /c start "" "C:\Program Files\WindowsApps\TradingView.Desktop_3.4.1.8194_x64__n534cwy3pjxzj\TradingView.exe" --remote-debugging-port=9222
 ```
+
+## Scripts
+
+- `scripts/ema_clouds_monthly_levels.pine` — Ripster EMA clouds + monthly high/low rays + anchored VWAPs (D/M/3M) + VWAP tendency table. Explained in [`scripts/ema_clouds_monthly_levels.md`](scripts/ema_clouds_monthly_levels.md).
