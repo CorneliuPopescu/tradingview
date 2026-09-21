@@ -3,3 +3,6 @@ tradingview-mcp/
 
 # session memory (remember plugin)
 .remember
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
